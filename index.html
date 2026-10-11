@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Snake.io</title>
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --card-bg: rgba(18, 22, 32, 0.88);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --accent-green: #00ff88;
+            --accent-gold: #ffc800;
+            --accent-gem: #00d2d3;
+            --accent-purple: #a55eea;
+            --accent-red: #ff3366;
+            --text-main: #f0f2f5;
+            --text-muted: #8c94a6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .icon-coin {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            background: radial-gradient(circle at 35% 35%, #fff066, #e6a100);
+            border-radius: 50%;
+            border: 1px solid #ffffff;
+            box-shadow: 0 0 6px rgba(255, 200, 0, 0.6);
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        .icon-gem {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, #a0ffff, #008888);
+            transform: rotate(45deg);
+            border: 1px solid #ffffff;
+            box-shadow: 0 0 6px rgba(0, 210, 211, 0.6);
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .icon-star {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #ffcc00;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        .icon-globe {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1.5px solid var(--accent-purple);
+            box-shadow: 0 0 6px var(--accent-purple);
+            vertical-align: middle;
+            margin-right: 6px;
+            position: relative;
+        }
+        .icon-globe::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            height: 1px;
+            background: var(--accent-purple);
+            transform: translateY(-50%);
+        }
+
+        .screen {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 28px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            display: none;
+            z-index: 10;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .screen.active { display: block; }
+
+        h1 {
+            color: var(--accent-green);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 16px rgba(0, 255, 136, 0.4);
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0 16px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: rgba(10, 12, 18, 0.8);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: var(--accent-green); }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #00ff88, #00b359);
+            color: #080a0f;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
+            box-shadow: 0 4px 18px rgba(0, 255, 136, 0.25);
+        }
+
+        button:active { transform: scale(0.97); }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            box-shadow: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #ffc800, #e69500);
+            color: #000;
+            box-shadow: 0 4px 18px rgba(255, 200, 0, 0.25);
+        }
+
+        .btn-cyan {
+            background: linear-gradient(135deg, #00d2d3, #009999);
+            color: #000;
+            box-shadow: 0 4px 18px rgba(0, 210, 211, 0.25);
+        }
+
+        .btn-red {
+            background: linear-gradient(135deg, #ff3366, #c0392b);
+            color: #fff;
+            box-shadow: 0 4px 18px rgba(255, 51, 102, 0.3);
+        }
+
+        .switch-link {
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .switch-link span { color: var(--accent-green); font-weight: 600; }
+
+        .stats-panel {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            border-radius: 14px;
+            margin: 16px 0;
+            text-align: left;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .stats-value { color: #fff; font-weight: 700; }
+
+        #shop-screen, #codes-screen {
+            position: absolute;
+            width: 92%;
+            max-width: 440px;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        #shop-screen::-webkit-scrollbar, #codes-screen::-webkit-scrollbar { width: 4px; }
+        #shop-screen::-webkit-scrollbar-thumb, #codes-screen::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: rgba(18, 22, 32, 0.96);
+            backdrop-filter: blur(12px);
+            z-index: 2;
+        }
+
+        .balance-group {
+            display: flex;
+            gap: 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .shop-section-title {
+            text-align: left;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin: 18px 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .promo-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .promo-container input { margin: 0; text-transform: uppercase; }
+        .promo-container button { width: auto; margin-top: 0; padding: 0 16px; white-space: nowrap; }
+
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 12, 18, 0.6);
+            padding: 12px 14px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .item-info { text-align: left; }
+        .item-name { font-size: 0.9rem; font-weight: 700; color: #fff; }
+        .item-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+        .shop-btn {
+            width: auto;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            margin-top: 0;
+            border-radius: 8px;
+        }
+
+        .shop-btn.bought { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); cursor: default; box-shadow: none; }
+        .shop-btn.equipped { background: var(--accent-green); color: #000; box-shadow: none; }
+
+        .codes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .codes-table th {
+            color: var(--text-muted);
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        .codes-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .code-tag {
+            font-family: monospace;
+            font-weight: bold;
+            color: var(--accent-green);
+            background: rgba(0, 255, 136, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        #game-container {
+            position: relative;
+            display: none;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #gameCanvas { background: #07090e; display: block; }
+
+        #hud-top-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #hud-left-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #hud-stats {
+            display: flex;
+            gap: 16px;
+            background: rgba(15, 18, 25, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 10px 18px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        #hud-world-badge {
+            background: rgba(15, 18, 25, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 10px 18px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-purple);
+            box-shadow: 0 0 12px rgba(165, 94, 234, 0.2);
+            width: fit-content;
+        }
+
+        #hud-leaderboard {
+            background: rgba(15, 18, 25, 0.88);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 12px 16px;
+            width: 180px;
+            text-align: left;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        #hud-leaderboard-title {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 4px;
+            text-align: center;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin: 4px 0;
+            color: var(--text-muted);
+        }
+
+        .leaderboard-item.is-player {
+            color: var(--accent-green);
+            font-weight: 800;
+        }
+
+        .leaderboard-rank { font-weight: 700; width: 22px; }
+        .leaderboard-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 6px; }
+        .leaderboard-score { font-weight: 700; }
+
+        /* MODAL DE GAME OVER PERSONALIZADO */
+        #gameover-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 380px;
+            z-index: 20;
+            border: 2px solid rgba(255, 51, 102, 0.4);
+            box-shadow: 0 0 35px rgba(255, 51, 102, 0.25);
+        }
+
+        .gameover-title {
+            color: var(--accent-red);
+            font-size: 2rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 18px rgba(255, 51, 102, 0.5);
+        }
+
+        .gameover-stats {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+
+        .gameover-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .gameover-value {
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.05rem;
+        }
+
+        /* CONTROLES MOBILE */
+        #joystick-container {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            width: 110px;
+            height: 110px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            touch-action: none;
+        }
+
+        #joystick-knob {
+            width: 44px;
+            height: 44px;
+            background: radial-gradient(circle, var(--accent-green), #00a859);
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
+            position: absolute;
+            pointer-events: none;
+            will-change: transform;
+        }
+
+        #turbo-button {
+            position: absolute;
+            bottom: 45px;
+            right: 40px;
+            width: 85px;
+            height: 85px;
+            background: rgba(255, 51, 102, 0.18);
+            border: 2px solid #ff3366;
+            border-radius: 50%;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            cursor: pointer;
+            touch-action: none;
+            box-shadow: 0 0 18px rgba(255, 51, 102, 0.3);
+            transition: transform 0.1s;
+        }
+
+        #turbo-button.active {
+            background: #ff3366;
+            box-shadow: 0 0 30px #ff3366;
+            transform: scale(0.92);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="auth-screen" class="screen active">
+        <h1 id="auth-title">Criar Conta</h1>
+        <input type="text" id="username" placeholder="Nome de usuário" autocomplete="off">
+        <input type="password" id="password" placeholder="Sua senha">
+        <button id="btn-auth" onclick="handleAuth()">Cadastrar</button>
+        <div class="switch-link" id="auth-switch" onclick="toggleAuthMode()">Já possui uma conta? <span>Entrar</span></div>
+    </div>
+
+    <!-- MAIN MENU SCREEN -->
+    <div id="menu-screen" class="screen">
+        <h1>Snake.io</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Jogador: <span id="player-name" style="color:#fff; font-weight:700;"></span></p>
+        
+        <div class="stats-panel">
+            <div class="stats-row">
+                <span><span class="icon-star"></span> Recorde</span>
+                <span class="stats-value" id="stat-highscore">0</span>
+            </div>
+            <div class="stats-row">
+                <span><span class="icon-coin"></span> Moedas</span>
+                <span class="stats-value" id="stat-coins">0</span>
+            </div>
+            <div class="stats-row">
+                <span><span class="icon-gem"></span> Gemas</span>
+                <span class="stats-value" id="stat-gems" style="color: var(--accent-gem);">0</span>
+            </div>
+        </div>
+
+        <button onclick="startGame()">JOGAR AGORA</button>
+        <button class="btn-gold" onclick="openShop()">LOJA & ACESSÓRIOS</button>
+        <button class="btn-cyan" onclick="openCodesScreen()">CÓDIGOS PÚBLICOS</button>
+        <button class="btn-secondary" onclick="logout()">Sair do Perfil</button>
+    </div>
+
+    <!-- SECRET SCREEN -->
+    <div id="secret-screen" class="screen">
+        <h1 style="color: var(--accent-purple); text-shadow: 0 0 15px rgba(165, 94, 234, 0.4);">Painel de Desejos</h1>
+        <p style="color: var(--text-muted); margin-bottom: 16px; font-size: 0.85rem; line-height: 1.4;">
+            Digite o recurso desejado. Exemplo:<br>
+            <strong>"5000 moedas"</strong>, <strong>"1000 gemas"</strong>, <strong>"50000 pontos"</strong> ou <strong>"tudo"</strong>.
+        </p>
+        
+        <input type="text" id="wish-input" placeholder="Escreva aqui..." style="border-color: var(--accent-purple);">
+        
+        <button style="background: linear-gradient(135deg, #a55eea, #712bb5); color: #fff;" onclick="makeWish()">Executar Comando</button>
+        <button class="btn-secondary" onclick="closeSecretScreen()">Voltar</button>
+    </div>
+
+    <!-- CODES SCREEN -->
+    <div id="codes-screen" class="screen">
+        <div class="shop-header">
+            <div style="font-weight: 800; font-size: 1.1rem; color: var(--accent-green);">Códigos Ativos</div>
+            <button class="close-btn" onclick="closeCodesScreen()">✕</button>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 12px; text-align: left;">
+            Clique em qualquer código para copiá-lo para a área de transferência:
+        </p>
+        <table class="codes-table">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Recompensa</th>
+                </tr>
+            </thead>
+            <tbody id="public-codes-list"></tbody>
+        </table>
+        <button class="btn-secondary" style="margin-top: 20px;" onclick="closeCodesScreen()">Voltar ao Menu</button>
+    </div>
+
+    <!-- SHOP SCREEN -->
+    <div id="shop-screen" class="screen">
+        <div class="shop-header">
+            <div class="balance-group">
+                <span><span class="icon-coin"></span><span id="shop-user-coins" style="color: var(--accent-gold);">0</span></span>
+                <span><span class="icon-gem"></span><span id="shop-user-gems" style="color: var(--accent-gem);">0</span></span>
+            </div>
+            <button class="close-btn" onclick="closeShop()">✕</button>
+        </div>
+
+        <div class="shop-section-title">Código Promocional</div>
+        <div class="promo-container">
+            <input type="text" id="promo-code-input" placeholder="Digite seu código...">
+            <button class="btn-gold" onclick="redeemCode()">Resgatar</button>
+        </div>
+        
+        <div class="shop-section-title">Chapéus e Acessórios Vias</div>
+        <div id="shop-accessories-container"></div>
+
+        <div class="shop-section-title">Skins com Texturas Exclusivas</div>
+        <div id="shop-skins-container"></div>
+
+        <div class="shop-section-title">Obter Gemas</div>
+        <div id="shop-gems-container"></div>
+
+        <div class="shop-section-title">Cenários de Jogo</div>
+        <div id="shop-worlds-container"></div>
+
+        <div class="shop-section-title">Poderes Especiais</div>
+        <div id="shop-powers-container"></div>
+    </div>
+
+    <!-- GAME CANVAS CONTAINER -->
+    <div id="game-container">
+        <div id="hud-top-bar">
+            <div id="hud-left-group">
+                <div id="hud-stats">
+                    <div><span class="icon-star"></span><span id="live-score">0</span></div>
+                    <div><span class="icon-coin"></span><span id="live-coins">0</span></div>
+                    <div><span class="icon-gem"></span><span id="live-gems">0</span></div>
+                </div>
+                <div id="hud-world-badge">
+                    <span class="icon-globe"></span><span id="live-world-name">Ciber Espaço</span>
+                </div>
+            </div>
+
+            <div id="hud-leaderboard">
+                <div id="hud-leaderboard-title"> Ranking Top 10</div>
+                <div id="hud-leaderboard-list"></div>
+            </div>
+        </div>
+
+        <!-- POP-UP GAME OVER PERSONALIZADO -->
+        <div id="gameover-screen" class="screen">
+            <div class="gameover-title">Fim de Jogo!</div>
+            <div class="gameover-stats">
+                <div class="gameover-row">
+                    <span>Pontuação Final:</span>
+                    <span class="gameover-value" id="go-score" style="color:var(--accent-gold);">0</span>
+                </div>
+                <div class="gameover-row">
+                    <span>Comidas Coletadas:</span>
+                    <span class="gameover-value" id="go-foods" style="color:var(--accent-green);">0</span>
+                </div>
+                <div class="gameover-row">
+                    <span>Moedas Ganhas:</span>
+                    <span class="gameover-value" id="go-coins">+0</span>
+                </div>
+                <div class="gameover-row">
+                    <span>Gemas Ganhas:</span>
+                    <span class="gameover-value" id="go-gems" style="color:var(--accent-gem);">+0</span>
+                </div>
+            </div>
+            <button onclick="restartGame()">TENTAR NOVAMENTE</button>
+            <button class="btn-secondary" onclick="exitToMenu()">VOLTAR AO MENU</button>
+        </div>
+        
+        <div id="joystick-container">
+            <div id="joystick-knob"></div>
+        </div>
+        <div id="turbo-button">TURBO</div>
+
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        const BOT_NAMES = ["Viper", "Phantom", "Shadow", "Titan", "Blaze", "Apex", "Ghost", "Nexus", "Storm", "Kratos", "Cobra", "Venom", "Slayer", "Zero"];
+
+        const SHOP_ITEMS = {
+            accessories: [
+                { id: 'acc_none', name: 'Nenhum Acessório', price: 0, currency: 'coins', desc: 'Cabeça limpa sem adereços' },
+                { id: 'acc_tophat', name: 'Cartola Elegante', price: 200, currency: 'coins', desc: 'Cartola clássica com fita vermelha' },
+                { id: 'acc_wizhat', name: 'Chapéu de Mago', price: 350, currency: 'coins', desc: 'Chapéu místico com frisos dourados' },
+                { id: 'acc_crown', name: 'Coroa Imperial HD', price: 500, currency: 'coins', desc: 'Coroa de ouro cravejada com rubis' },
+                { id: 'acc_cap', name: 'Boné de Aba Reta', price: 180, currency: 'coins', desc: 'Estilo urbano dinâmico' },
+                { id: 'acc_halo', name: 'Aura Astral', price: 400, currency: 'coins', desc: 'Anel de energia pulsante' },
+                { id: 'acc_shades', name: 'Óculos Cyberpunk', price: 250, currency: 'coins', desc: 'Visor espelhado futurista' },
+                // NOVOS ITENS PAGOS ADICIONADOS
+                { id: 'acc_headset', name: 'Fone Gamer Neon', price: 650, currency: 'coins', desc: 'Fone LED neon com iluminação RGB' },
+                { id: 'acc_mask', name: 'Máscara Mística', price: 150, currency: 'gems', desc: 'Máscara lendária de energia pura' },
+                { id: 'acc_swords', name: 'Espadas Cruzadas', price: 300, currency: 'gems', desc: 'Lâminas reluzentes para combatentes' }
+            ],
+            skins: [
+                { id: 'default', name: 'Verde Néon', price: 0, currency: 'coins', color: '#00ff88', glow: '#00ff88', texture: 'neon' },
+                { id: 'skin_scales', name: 'Escamas Neon', price: 200, currency: 'coins', color: '#00d2d3', glow: '#00d2d3', texture: 'scales' },
+                { id: 'skin_stripes', name: 'Listras Ciber', price: 350, currency: 'coins', color: '#ff9f43', glow: '#ff9f43', texture: 'striped' },
+                { id: 'skin_dragon', name: 'Dragão Carmim', price: 500, currency: 'coins', color: '#ff3366', glow: '#ff3366', texture: 'dragon' },
+                { id: 'skin_crystal', name: 'Cristal Astral', price: 700, currency: 'coins', color: '#a55eea', glow: '#a55eea', texture: 'crystal' },
+                { id: 'skin_gold', name: 'Ouro Real', price: 1000, currency: 'coins', color: '#ffd700', glow: '#ffe600', texture: 'gold' },
+                // NOVAS SKINS ADICIONADAS
+                { id: 'skin_prisma', name: 'Prisma Cósmico', price: 250, currency: 'gems', color: '#ff00ff', glow: '#00ffff', texture: 'crystal' },
+                { id: 'skin_dark_neon', name: 'Neon Ultra HD', price: 1800, currency: 'coins', color: '#00ffff', glow: '#ff0055', texture: 'neon' }
+            ],
+            gemPacks: [
+                { id: 'gems_small', name: '20 Gemas', coinsPrice: 150, gems: 20 },
+                { id: 'gems_medium', name: '100 Gemas', coinsPrice: 600, gems: 100 },
+                { id: 'gems_large', name: '500 Gemas', coinsPrice: 2500, gems: 500 }
+            ],
+            worlds: [
+                { id: 'world_classic', name: 'Ciber Espaço', priceGems: 0, bg: '#07090e', grid: 'rgba(255,255,255,0.04)', border: '#00ff88' },
+                { id: 'world_volcano', name: 'Vulcão Sombrio', priceGems: 100, bg: '#120404', grid: 'rgba(255,50,0,0.06)', border: '#ff3300' },
+                { id: 'world_space', name: 'Galáxia Profunda', priceGems: 250, bg: '#050312', grid: 'rgba(165,94,234,0.06)', border: '#a55eea' },
+                { id: 'world_adm', name: 'Domínio ADM (OP)', priceGems: 0, secret: true, bg: '#10021a', grid: 'rgba(255,215,0,0.08)', border: '#ffd700' },
+                { id: 'world_gdm', name: 'Mundo GDM (SUPER OP)', priceGems: 0, secret: true, bg: '#01181a', grid: 'rgba(0,255,210,0.08)', border: '#00ffd2' }
+            ],
+            powers: [
+                { id: 'power_double_points', name: 'Pontuação x2', price: 100, currency: 'coins', desc: 'Dobra todos os pontos recebidos.' },
+                { id: 'power_magnet_coins', name: 'Atração de Moedas', price: 120, currency: 'coins', desc: 'Multiplica os ganhos de moeda por 2.' },
+                // NOVOS PODERES
+                { id: 'power_super_magnet', name: 'Super Ímã de Comida', price: 80, currency: 'gems', desc: 'Puxa alimentos de longe para a sua boca.' }
+            ]
+        };
+
+        const PUBLIC_PROMO_CODES = [
+            { code: 'PRESENTE', reward: '1.000 Moedas', action: { type: 'coins', amount: 1000 } },
+            { code: 'BRASIL', reward: '5.000 Moedas', action: { type: 'coins', amount: 5000 } },
+            { code: 'GEMASFREE', reward: '500 Gemas', action: { type: 'gems', amount: 500 } },
+            { code: 'BONUS100', reward: '100 Gemas', action: { type: 'gems', amount: 100 } },
+            { code: 'SUPERSTART', reward: '2.500 Moedas', action: { type: 'coins', amount: 2500 } },
+            { code: 'ULTRA2026', reward: '10.000 Moedas', action: { type: 'coins', amount: 10000 } },
+            { code: 'MEGAPACK', reward: '1.000 Gemas', action: { type: 'gems', amount: 1000 } },
+            { code: 'VIPCOINS', reward: '15.000 Moedas', action: { type: 'coins', amount: 15000 } },
+            { code: 'TURBOBOOST', reward: '750 Gemas', action: { type: 'gems', amount: 750 } },
+            { code: 'SNAKEKING', reward: '25.000 Moedas', action: { type: 'coins', amount: 25000 } }
+        ];
+
+        const SECRET_PROMO_CODES = {
+            'WORDADM': { type: 'world', worldId: 'world_adm' },
+            'WORDGDM': { type: 'world', worldId: 'world_gdm' },
+            'DESEJO=DESBLOQUEAR LOCAL SECRETO': { type: 'secret_panel' },
+            'DESEJO=DESBLOQUEARLOCALSECRETO': { type: 'secret_panel' },
+            'DESEJO': { type: 'secret_panel' },
+            'GODMODE': { type: 'op_resources', coins: 1000000, gems: 50000, msg: ' MODO DEUS ATIVADO! +1.000.000 Moedas e +50.000 Gemas!' },
+            'INFINITE': { type: 'op_all', msg: ' RECURSOS INFINITOS ATIVADOS! Mundos, Moedas e Gemas no Máximo!' }
+        };
+
+        let currentUser = null;
+        let isLoginMode = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('snake_active_user');
+            if (savedUser) {
+                let users = JSON.parse(localStorage.getItem('snake_users')) || {};
+                if (users[savedUser]) {
+                    currentUser = savedUser;
+                    openMenu();
+                }
+            }
+        });
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? 'Acessar Conta' : 'Criar Conta';
+            document.getElementById('btn-auth').innerText = isLoginMode ? 'Entrar' : 'Cadastrar';
+            document.getElementById('auth-switch').innerHTML = isLoginMode ? 'Não possui conta? <span>Cadastrar</span>' : 'Já possui uma conta? <span>Entrar</span>';
+        }
+
+        function handleAuth() {
+            const userInp = document.getElementById('username').value.trim();
+            const passInp = document.getElementById('password').value.trim();
+
+            if (!userInp || !passInp) {
+                alert('Preencha todos os campos!');
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem('snake_users')) || {};
+
+            if (isLoginMode) {
+                if (users[userInp] && users[userInp].password === passInp) {
+                    currentUser = userInp;
+                    localStorage.setItem('snake_active_user', currentUser);
+                    openMenu();
+                } else {
+                    alert('Usuário ou senha incorretos.');
+                }
+            } else {
+                if (users[userInp]) {
+                    alert('Nome de usuário já cadastrado.');
+                } else {
+                    users[userInp] = { 
+                        password: passInp, 
+                        highscore: 0, 
+                        coins: 0,
+                        gems: 0,
+                        unlockedSkins: ['default'],
+                        equippedSkin: 'default',
+                        unlockedAccessories: ['acc_none'],
+                        equippedAccessory: 'acc_none',
+                        unlockedWorlds: ['world_classic'],
+                        equippedWorld: 'world_classic',
+                        activePowers: [],
+                        redeemedCodes: []
+                    };
+                    localStorage.setItem('snake_users', JSON.stringify(users));
+                    currentUser = userInp;
+                    localStorage.setItem('snake_active_user', currentUser);
+                    openMenu();
+                }
+            }
+        }
+
+        function openMenu() {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            let userData = users[currentUser];
+
+            if(!userData.unlockedAccessories) userData.unlockedAccessories = ['acc_none'];
+            if(!userData.equippedAccessory) userData.equippedAccessory = 'acc_none';
+
+            document.getElementById('player-name').innerText = currentUser;
+            document.getElementById('stat-highscore').innerText = userData.highscore.toLocaleString();
+            document.getElementById('stat-coins').innerText = userData.coins.toLocaleString();
+            document.getElementById('stat-gems').innerText = userData.gems.toLocaleString();
+
+            document.getElementById('auth-screen').classList.remove('active');
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('shop-screen').classList.remove('active');
+            document.getElementById('secret-screen').classList.remove('active');
+            document.getElementById('codes-screen').classList.remove('active');
+            document.getElementById('gameover-screen').classList.remove('active');
+            document.getElementById('menu-screen').classList.add('active');
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('snake_active_user');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('menu-screen').classList.remove('active');
+            document.getElementById('auth-screen').classList.add('active');
+        }
+
+        function saveProgress(scoreObtained, coinsObtained, gemsObtained = 0) {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            if (users && users[currentUser]) {
+                users[currentUser].coins += coinsObtained;
+                users[currentUser].gems += gemsObtained;
+                if (scoreObtained > users[currentUser].highscore) {
+                    users[currentUser].highscore = scoreObtained;
+                }
+                users[currentUser].activePowers = [];
+                localStorage.setItem('snake_users', JSON.stringify(users));
+            }
+        }
+
+        function openShop() {
+            document.getElementById('menu-screen').classList.remove('active');
+            document.getElementById('shop-screen').classList.add('active');
+            renderShop();
+        }
+
+        function closeShop() {
+            document.getElementById('shop-screen').classList.remove('active');
+            openMenu();
+        }
+
+        function openCodesScreen() {
+            document.getElementById('menu-screen').classList.remove('active');
+            document.getElementById('codes-screen').classList.add('active');
+            
+            const tbody = document.getElementById('public-codes-list');
+            tbody.innerHTML = '';
+            
+            PUBLIC_PROMO_CODES.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="code-tag" onclick="copyCode('${item.code}')">${item.code}</span></td>
+                        <td>${item.reward}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function copyCode(code) {
+            navigator.clipboard.writeText(code);
+            alert(`Código ${code} copiado com sucesso!`);
+        }
+
+        function closeCodesScreen() {
+            document.getElementById('codes-screen').classList.remove('active');
+            openMenu();
+        }
+
+        function redeemCode() {
+            const input = document.getElementById('promo-code-input');
+            const code = input.value.trim().toUpperCase();
+            if (!code) return;
+
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            let userData = users[currentUser];
+
+            if (!userData.redeemedCodes) userData.redeemedCodes = [];
+
+            if (SECRET_PROMO_CODES[code] !== undefined) {
+                const reward = SECRET_PROMO_CODES[code];
+                if (reward.type === 'secret_panel') {
+                    document.getElementById('shop-screen').classList.remove('active');
+                    document.getElementById('secret-screen').classList.add('active');
+                    input.value = ''; 
+                    return; 
+                }
+                if (reward.type === 'world') {
+                    if(!userData.unlockedWorlds.includes(reward.worldId)) userData.unlockedWorlds.push(reward.worldId);
+                    userData.equippedWorld = reward.worldId;
+                    localStorage.setItem('snake_users', JSON.stringify(users));
+                    alert('Mundo Especial Desbloqueado!');
+                    input.value = '';
+                    renderShop();
+                    return;
+                }
+                if (reward.type === 'op_resources') {
+                    userData.coins += reward.coins;
+                    userData.gems += reward.gems;
+                    localStorage.setItem('snake_users', JSON.stringify(users));
+                    alert(reward.msg);
+                    input.value = '';
+                    renderShop();
+                    return;
+                }
+                if (reward.type === 'op_all') {
+                    userData.coins += 9999999;
+                    userData.gems += 500000;
+                    if(!userData.unlockedWorlds.includes('world_adm')) userData.unlockedWorlds.push('world_adm');
+                    if(!userData.unlockedWorlds.includes('world_gdm')) userData.unlockedWorlds.push('world_gdm');
+                    localStorage.setItem('snake_users', JSON.stringify(users));
+                    alert(reward.msg);
+                    input.value = '';
+                    renderShop();
+                    return;
+                }
+            }
+
+            const publicItem = PUBLIC_PROMO_CODES.find(p => p.code === code);
+            if (publicItem) {
+                if (userData.redeemedCodes.includes(code)) {
+                    alert('Código já utilizado.');
+                } else {
+                    const reward = publicItem.action;
+                    if (reward.type === 'coins') userData.coins += reward.amount;
+                    if (reward.type === 'gems') userData.gems += reward.amount;
+
+                    userData.redeemedCodes.push(code);
+                    localStorage.setItem('snake_users', JSON.stringify(users));
+                    alert('Recompensa resgatada com sucesso!');
+                    input.value = '';
+                    renderShop();
+                }
+            } else alert('Código inválido.');
+        }
+
+        function makeWish() {
+            const wishInput = document.getElementById('wish-input').value.trim().toLowerCase();
+            if (!wishInput) return;
+
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            let userData = users[currentUser];
+            let numMatch = wishInput.match(/\d+/);
+            let amount = numMatch ? parseInt(numMatch[0], 10) : 100000; 
+
+            if (wishInput.includes('tudo')) {
+                userData.coins += 500000;
+                userData.gems += 50000;
+                userData.highscore += 100000;
+                if(!userData.unlockedWorlds.includes('world_adm')) userData.unlockedWorlds.push('world_adm');
+                if(!userData.unlockedWorlds.includes('world_gdm')) userData.unlockedWorlds.push('world_gdm');
+                alert('Tudo ativado!');
+            } else if (wishInput.includes('moeda')) {
+                userData.coins += amount;
+                alert(`${amount.toLocaleString()} moedas adicionadas!`);
+            } else if (wishInput.includes('gema')) {
+                userData.gems += amount;
+                alert(`${amount.toLocaleString()} gemas adicionadas!`);
+            } else if (wishInput.includes('ponto') || wishInput.includes('recorde')) {
+                userData.highscore += amount;
+                alert(`Recorde alterado para +${amount.toLocaleString()}!`);
+            } else {
+                alert('Comando não reconhecido.');
+                return;
+            }
+
+            localStorage.setItem('snake_users', JSON.stringify(users));
+            document.getElementById('wish-input').value = '';
+        }
+
+        function closeSecretScreen() {
+            document.getElementById('secret-screen').classList.remove('active');
+            openMenu();
+        }
+
+        function renderShop() {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            let userData = users[currentUser];
+
+            document.getElementById('shop-user-coins').innerText = userData.coins.toLocaleString();
+            document.getElementById('shop-user-gems').innerText = userData.gems.toLocaleString();
+
+            const accContainer = document.getElementById('shop-accessories-container');
+            accContainer.innerHTML = '';
+            SHOP_ITEMS.accessories.forEach(acc => {
+                const isUnlocked = userData.unlockedAccessories && userData.unlockedAccessories.includes(acc.id);
+                const isEquipped = userData.equippedAccessory === acc.id;
+
+                let iconClass = acc.currency === 'gems' ? 'icon-gem' : 'icon-coin';
+                let btnClass = acc.currency === 'gems' ? 'btn-cyan' : 'btn-gold';
+
+                let btnHtml = isEquipped 
+                    ? `<button class="shop-btn equipped">Equipado</button>`
+                    : isUnlocked 
+                    ? `<button class="shop-btn btn-secondary" onclick="equipAccessory('${acc.id}')">Usar</button>`
+                    : `<button class="shop-btn ${btnClass}" onclick="buyAccessory('${acc.id}', ${acc.price}, '${acc.currency}')"><span class="${iconClass}"></span>${acc.price}</button>`;
+
+                accContainer.innerHTML += `
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <div class="item-name">${acc.name}</div>
+                            <div class="item-desc">${acc.desc}</div>
+                        </div>
+                        ${btnHtml}
+                    </div>
+                `;
+            });
+
+            const skinsContainer = document.getElementById('shop-skins-container');
+            skinsContainer.innerHTML = '';
+            SHOP_ITEMS.skins.forEach(skin => {
+                const isUnlocked = userData.unlockedSkins.includes(skin.id);
+                const isEquipped = userData.equippedSkin === skin.id;
+
+                let iconClass = skin.currency === 'gems' ? 'icon-gem' : 'icon-coin';
+                let btnClass = skin.currency === 'gems' ? 'btn-cyan' : 'btn-gold';
+
+                let btnHtml = isEquipped 
+                    ? `<button class="shop-btn equipped">Equipado</button>`
+                    : isUnlocked 
+                    ? `<button class="shop-btn btn-secondary" onclick="equipSkin('${skin.id}')">Usar</button>`
+                    : `<button class="shop-btn ${btnClass}" onclick="buySkin('${skin.id}', ${skin.price}, '${skin.currency}')"><span class="${iconClass}"></span>${skin.price}</button>`;
+
+                skinsContainer.innerHTML += `
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <div class="item-name" style="color:${skin.color};">${skin.name}</div>
+                            <div class="item-desc">Textura HD única</div>
+                        </div>
+                        ${btnHtml}
+                    </div>
+                `;
+            });
+
+            const gemsContainer = document.getElementById('shop-gems-container');
+            gemsContainer.innerHTML = '';
+            SHOP_ITEMS.gemPacks.forEach(pack => {
+                gemsContainer.innerHTML += `
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <div class="item-name" style="color:var(--accent-gem);">${pack.name}</div>
+                            <div class="item-desc">Pacote de gemas</div>
+                        </div>
+                        <button class="shop-btn btn-gold" onclick="buyGems(${pack.coinsPrice}, ${pack.gems})"><span class="icon-coin"></span>${pack.coinsPrice}</button>
+                    </div>
+                `;
+            });
+
+            const worldsContainer = document.getElementById('shop-worlds-container');
+            worldsContainer.innerHTML = '';
+            SHOP_ITEMS.worlds.forEach(w => {
+                const isUnlocked = userData.unlockedWorlds && userData.unlockedWorlds.includes(w.id);
+                const isEquipped = userData.equippedWorld === w.id;
+                if (w.secret && !isUnlocked) return;
+
+                let btnHtml = isEquipped 
+                    ? `<button class="shop-btn equipped">Equipado</button>`
+                    : isUnlocked 
+                    ? `<button class="shop-btn btn-secondary" onclick="equipWorld('${w.id}')">Usar</button>`
+                    : `<button class="shop-btn" style="background: var(--accent-gem); color:#000;" onclick="buyWorld('${w.id}', ${w.priceGems})"><span class="icon-gem"></span>${w.priceGems}</button>`;
+
+                worldsContainer.innerHTML += `
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <div class="item-name" style="color:${w.border};">${w.name}</div>
+                            <div class="item-desc">Cenário arena</div>
+                        </div>
+                        ${btnHtml}
+                    </div>
+                `;
+            });
+
+            const powersContainer = document.getElementById('shop-powers-container');
+            powersContainer.innerHTML = '';
+            SHOP_ITEMS.powers.forEach(power => {
+                const hasPower = userData.activePowers && userData.activePowers.includes(power.id);
+                let iconClass = power.currency === 'gems' ? 'icon-gem' : 'icon-coin';
+                let btnClass = power.currency === 'gems' ? 'btn-cyan' : 'btn-gold';
+
+                let btnHtml = hasPower 
+                    ? `<button class="shop-btn bought">Ativado</button>`
+                    : `<button class="shop-btn ${btnClass}" onclick="buyPower('${power.id}', ${power.price}, '${power.currency}')"><span class="${iconClass}"></span>${power.price}</button>`;
+
+                powersContainer.innerHTML += `
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <div class="item-name" style="color:var(--accent-gold);">${power.name}</div>
+                            <div class="item-desc">${power.desc}</div>
+                        </div>
+                        ${btnHtml}
+                    </div>
+                `;
+            });
+        }
+
+        function buyAccessory(accId, price, currency = 'coins') {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            let userData = users[currentUser];
+            let userBalance = currency === 'gems' ? userData.gems : userData.coins;
+
+            if (userBalance >= price) {
+                if (currency === 'gems') userData.gems -= price;
+                else userData.coins -= price;
+
+                if(!userData.unlockedAccessories) userData.unlockedAccessories = [];
+                userData.unlockedAccessories.push(accId);
+                localStorage.setItem('snake_users', JSON.stringify(users));
+                renderShop();
+            } else alert((currency === 'gems' ? 'Gemas' : 'Moedas') + ' insuficientes.');
+        }
+
+        function equipAccessory(accId) {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            users[currentUser].equippedAccessory = accId;
+            localStorage.setItem('snake_users', JSON.stringify(users));
+            renderShop();
+        }
+
+        function buyGems(coinsPrice, gemsAmount) {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            let userData = users[currentUser];
+            if (userData.coins >= coinsPrice) {
+                userData.coins -= coinsPrice;
+                userData.gems += gemsAmount;
+                localStorage.setItem('snake_users', JSON.stringify(users));
+                renderShop();
+            } else alert('Moedas insuficientes.');
+        }
+
+        function buyWorld(worldId, priceGems) {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            let userData = users[currentUser];
+            if (userData.gems >= priceGems) {
+                userData.gems -= priceGems;
+                userData.unlockedWorlds.push(worldId);
+                localStorage.setItem('snake_users', JSON.stringify(users));
+                renderShop();
+            } else alert('Gemas insuficientes.');
+        }
+
+        function equipWorld(worldId) {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            users[currentUser].equippedWorld = worldId;
+            localStorage.setItem('snake_users', JSON.stringify(users));
+            renderShop();
+        }
+
+        function buySkin(skinId, price, currency = 'coins') {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            let userData = users[currentUser];
+            let userBalance = currency === 'gems' ? userData.gems : userData.coins;
+
+            if (userBalance >= price) {
+                if (currency === 'gems') userData.gems -= price;
+                else userData.coins -= price;
+
+                userData.unlockedSkins.push(skinId);
+                localStorage.setItem('snake_users', JSON.stringify(users));
+                renderShop();
+            } else alert((currency === 'gems' ? 'Gemas' : 'Moedas') + ' insuficientes.');
+        }
+
+        function equipSkin(skinId) {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            users[currentUser].equippedSkin = skinId;
+            localStorage.setItem('snake_users', JSON.stringify(users));
+            renderShop();
+        }
+
+        function buyPower(powerId, price, currency = 'coins') {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            let userData = users[currentUser];
+            let userBalance = currency === 'gems' ? userData.gems : userData.coins;
+
+            if (userBalance >= price) {
+                if (currency === 'gems') userData.gems -= price;
+                else userData.coins -= price;
+
+                if(!userData.activePowers) userData.activePowers = [];
+                userData.activePowers.push(powerId);
+                localStorage.setItem('snake_users', JSON.stringify(users));
+                renderShop();
+            } else alert((currency === 'gems' ? 'Gemas' : 'Moedas') + ' insuficientes.');
+        }
+
+        // MOTOR GRÁFICO
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        let gameActive = false;
+        let snake, foods, bots;
+        let score, coinsCollected, gemsCollected, foodsEaten;
+        const WORLD_SIZE = 2400;
+
+        let currentWorldTheme = SHOP_ITEMS.worlds[0];
+        let currentAccessory = 'acc_none';
+        let currentSkinObj = SHOP_ITEMS.skins[0];
+
+        let pointMultiplier = 1;
+        let coinMultiplier = 1;
+        let superMagnetActive = false;
+
+        let moveAngle = 0; 
+        let isTurboActive = false;
+        let turboTimer = 0;
+        let isMobile = false;
+
+        const elLiveScore = document.getElementById('live-score');
+        const elLiveCoins = document.getElementById('live-coins');
+        const elLiveGems = document.getElementById('live-gems');
+        const elLeaderboardList = document.getElementById('hud-leaderboard-list');
+        const joyContainer = document.getElementById('joystick-container');
+        const joyKnob = document.getElementById('joystick-knob');
+        const turboBtn = document.getElementById('turbo-button');
+
+        function initGameData() {
+            let users = JSON.parse(localStorage.getItem('snake_users'));
+            let userData = users[currentUser];
+
+            let skinId = userData.equippedSkin || 'default';
+            currentSkinObj = SHOP_ITEMS.skins.find(s => s.id === skinId) || SHOP_ITEMS.skins[0];
+            currentAccessory = userData.equippedAccessory || 'acc_none';
+
+            let worldId = userData.equippedWorld || 'world_classic';
+            currentWorldTheme = SHOP_ITEMS.worlds.find(w => w.id === worldId) || SHOP_ITEMS.worlds[0];
+
+            document.getElementById('live-world-name').innerText = currentWorldTheme.name;
+
+            pointMultiplier = (userData.activePowers && userData.activePowers.includes('power_double_points')) ? 2 : 1;
+            coinMultiplier = (userData.activePowers && userData.activePowers.includes('power_magnet_coins')) ? 2 : 1;
+            superMagnetActive = (userData.activePowers && userData.activePowers.includes('power_super_magnet')) ? true : false;
+
+            snake = {
+                id: 'player',
+                name: currentUser,
+                segments: [{x: WORLD_SIZE/2, y: WORLD_SIZE/2}],
+                radius: 14,
+                color: currentSkinObj.color,
+                glow: currentSkinObj.glow,
+                texture: currentSkinObj.texture,
+                baseSpeed: 6.0,
+                currentSpeed: 6.0,
+                isPlayer: true
+            };
+
+            let initialSegments = 18;
+            score = 0;
+            for(let i = 1; i < initialSegments; i++) {
+                snake.segments.push({x: WORLD_SIZE/2, y: WORLD_SIZE/2});
+            }
+
+            coinsCollected = 0;
+            gemsCollected = 0;
+            foodsEaten = 0;
+            foods = [];
+            bots = [];
+            isTurboActive = false;
+            moveAngle = 0;
+
+            joyKnob.style.transform = `translate(0px, 0px)`;
+            document.getElementById('gameover-screen').classList.remove('active');
+
+            for (let i = 0; i < 150; i++) spawnFood();
+            for (let i = 0; i < 10; i++) spawnBot();
+
+            updateHUD();
+        }
+
+        function updateHUD() {
+            elLiveScore.innerText = Math.floor(score).toLocaleString();
+            elLiveCoins.innerText = coinsCollected.toLocaleString();
+            elLiveGems.innerText = gemsCollected.toLocaleString();
+            updateLeaderboard();
+        }
+
+        function updateLeaderboard() {
+            let allSnakes = [
+                { name: snake.name, score: Math.floor(score), isPlayer: true }
+            ];
+
+            bots.forEach(bot => {
+                allSnakes.push({
+                    name: bot.name,
+                    score: Math.floor(bot.score),
+                    isPlayer: false
+                });
+            });
+
+            allSnakes.sort((a, b) => b.score - a.score);
+
+            let html = '';
+            let topTen = allSnakes.slice(0, 10);
+
+            topTen.forEach((item, index) => {
+                let activeClass = item.isPlayer ? 'leaderboard-item is-player' : 'leaderboard-item';
+                html += `
+                    <div class="${activeClass}">
+                        <span class="leaderboard-rank">#${index + 1}</span>
+                        <span class="leaderboard-name">${item.name}</span>
+                        <span class="leaderboard-score">${item.score}</span>
+                    </div>
+                `;
+            });
+
+            elLeaderboardList.innerHTML = html;
+        }
+
+        function addScoreAndRewards(pointsGained) {
+            let finalPoints = pointsGained * pointMultiplier;
+
+            if (currentWorldTheme.id === 'world_adm') {
+                finalPoints *= 10;
+                coinsCollected += (finalPoints * 25);
+                gemsCollected += Math.floor(finalPoints / 2);
+            } else if (currentWorldTheme.id === 'world_gdm') {
+                finalPoints *= 50;
+                coinsCollected += (finalPoints * 100);
+                gemsCollected += Math.floor(finalPoints);
+            }
+
+            score += finalPoints;
+            updateHUD();
+        }
+
+        function spawnFood() {
+            let rand = Math.random();
+            let type = 'food';
+            if (rand > 0.93) type = 'gem';
+            else if (rand > 0.82) type = 'coin';
+
+            foods.push({
+                x: Math.random() * WORLD_SIZE,
+                y: Math.random() * WORLD_SIZE,
+                radius: type === 'food' ? (Math.random() * 2 + 5) : 8,
+                color: `hsl(${Math.random() * 360}, 90%, 65%)`,
+                type: type,
+                pulseOffset: Math.random() * Math.PI * 2
+            });
+        }
+
+        function killBot(index) {
+            let bot = bots[index];
+            if (!bot) return;
+
+            bot.segments.forEach(s => {
+                if(Math.random() > 0.25) {
+                    foods.push({
+                        x: s.x + (Math.random()*16 - 8), 
+                        y: s.y + (Math.random()*16 - 8), 
+                        radius: 6, 
+                        color: bot.color, 
+                        type: 'food', 
+                        pulseOffset: 0
+                    });
+                }
+            });
+
+            bots.splice(index, 1);
+            spawnBot();
+        }
+
+        function spawnBot() {
+            let botX = Math.random() * (WORLD_SIZE - 200) + 100;
+            let botY = Math.random() * (WORLD_SIZE - 200) + 100;
+            let botLength = Math.floor(Math.random() * 16) + 14;
+            let segments = [];
+            for(let i=0; i<botLength; i++) segments.push({x: botX, y: botY});
+
+            let randomSkin = SHOP_ITEMS.skins[Math.floor(Math.random() * SHOP_ITEMS.skins.length)];
+            let randomName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+
+            bots.push({
+                id: 'bot_' + Math.random().toString(36).substr(2, 9),
+                name: randomName,
+                segments: segments,
+                radius: 13,
+                color: randomSkin.color,
+                glow: randomSkin.glow,
+                texture: randomSkin.texture,
+                baseSpeed: 4.2,
+                currentSpeed: 4.2,
+                angle: Math.random() * Math.PI * 2,
+                targetAngle: Math.random() * Math.PI * 2,
+                score: Math.floor(Math.random() * 300) + 100,
+                isAttacking: false,
+                attackTimer: 0
+            });
+        }
+
+        function startGame() {
+            document.getElementById('menu-screen').classList.remove('active');
+            document.getElementById('game-container').style.display = 'block';
+            
+            resizeCanvas();
+            initGameData();
+            gameActive = true;
+            
+            window.addEventListener('resize', resizeCanvas);
+            setupControls();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function restartGame() {
+            initGameData();
+            gameActive = true;
+            requestAnimationFrame(gameLoop);
+        }
+
+        function exitToMenu() {
+            document.getElementById('gameover-screen').classList.remove('active');
+            openMenu();
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function setupControls() {
+            isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+            if (isMobile) {
+                joyContainer.style.display = 'flex';
+                turboBtn.style.display = 'flex';
+
+                let dragging = false;
+                let joyCenterX = 0;
+                let joyCenterY = 0;
+
+                function handleJoyStart(e) {
+                    dragging = true;
+                    let rect = joyContainer.getBoundingClientRect();
+                    joyCenterX = rect.left + rect.width / 2;
+                    joyCenterY = rect.top + rect.height / 2;
+                    handleJoyMove(e);
+                }
+
+                function handleJoyMove(e) {
+                    if (!dragging) return;
+                    let clientX = e.touches[0].clientX;
+                    let clientY = e.touches[0].clientY;
+
+                    let dx = clientX - joyCenterX;
+                    let dy = clientY - joyCenterY;
+                    let dist = Math.hypot(dx, dy);
+                    let maxDist = 40;
+
+                    if (dist > maxDist) {
+                        dx = (dx / dist) * maxDist;
+                        dy = (dy / dist) * maxDist;
+                    }
+
+                    joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+                    moveAngle = Math.atan2(dy, dx);
+                }
+
+                function handleJoyEnd() {
+                    dragging = false;
+                    joyKnob.style.transform = `translate(0px, 0px)`;
+                }
+
+                joyContainer.addEventListener('touchstart', handleJoyStart, {passive: false});
+                window.addEventListener('touchmove', handleJoyMove, {passive: false});
+                window.addEventListener('touchend', handleJoyEnd);
+
+                turboBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isTurboActive = true;
+                    turboBtn.classList.add('active');
+                }, {passive: false});
+
+                turboBtn.addEventListener('touchend', () => {
+                    isTurboActive = false;
+                    turboBtn.classList.remove('active');
+                });
+
+            } else {
+                joyContainer.style.display = 'none';
+                turboBtn.style.display = 'none';
+
+                window.onmousemove = (e) => {
+                    if (!gameActive) return;
+                    let centerX = canvas.width / 2;
+                    let centerY = canvas.height / 2;
+                    let dx = e.clientX - centerX;
+                    let dy = e.clientY - centerY;
+                    if (Math.hypot(dx, dy) > 10) {
+                        moveAngle = Math.atan2(dy, dx);
+                    }
+                };
+
+                window.onmousedown = (e) => {
+                    if (e.button === 0) isTurboActive = true;
+                };
+
+                window.onmouseup = (e) => {
+                    if (e.button === 0) isTurboActive = false;
+                };
+
+                window.onkeydown = (e) => {
+                    if (e.code === 'Space') isTurboActive = true;
+                };
+
+                window.onkeyup = (e) => {
+                    if (e.code === 'Space') isTurboActive = false;
+                };
+            }
+        }
+
+        function gameLoop() {
+            if (!gameActive) return;
+            updateLogic();
+            drawGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateLogic() {
+            // JOGADOR - TURBO
+            if (isTurboActive && snake.segments.length > 6) {
+                snake.currentSpeed = snake.baseSpeed * 1.85;
+                turboTimer++;
+                if(turboTimer % 6 === 0 && score > 0) {
+                    score = Math.max(0, score - 2);
+                    if(Math.random() > 0.3) {
+                        let tail = snake.segments[snake.segments.length - 1];
+                        foods.push({x: tail.x, y: tail.y, radius: 5, color: snake.color, type: 'food', pulseOffset: 0});
+                        snake.segments.pop();
+                    }
+                    updateHUD();
+                }
+            } else {
+                snake.currentSpeed = snake.baseSpeed;
+            }
+
+            let head = snake.segments[0];
+            let nextX = head.x + Math.cos(moveAngle) * snake.currentSpeed;
+            let nextY = head.y + Math.sin(moveAngle) * snake.currentSpeed;
+
+            head.x = Math.max(0, Math.min(WORLD_SIZE, nextX));
+            head.y = Math.max(0, Math.min(WORLD_SIZE, nextY));
+
+            const targetDist = snake.radius * 0.42;
+            for (let i = snake.segments.length - 1; i > 0; i--) {
+                let curr = snake.segments[i];
+                let next = snake.segments[i - 1];
+                let bDx = next.x - curr.x;
+                let bDy = next.y - curr.y;
+                let bDist = Math.hypot(bDx, bDy);
+
+                if (bDist > targetDist) {
+                    let bAngle = Math.atan2(bDy, bDx);
+                    curr.x = next.x - Math.cos(bAngle) * targetDist;
+                    curr.y = next.y - Math.sin(bAngle) * targetDist;
+                }
+            }
+
+            // INTELIGÊNCIA DOS BOTS
+            bots.forEach(bot => {
+                let bHead = bot.segments[0];
+
+                let dangerAngle = null;
+                let minDangerDist = 80;
+
+                for (let i = 0; i < snake.segments.length; i++) {
+                    let seg = snake.segments[i];
+                    let d = Math.hypot(seg.x - bHead.x, seg.y - bHead.y);
+                    if (d < minDangerDist) {
+                        minDangerDist = d;
+                        dangerAngle = Math.atan2(bHead.y - seg.y, bHead.x - seg.x);
+                    }
+                }
+
+                bots.forEach(otherBot => {
+                    if (otherBot.id !== bot.id) {
+                        for (let i = 0; i < otherBot.segments.length; i++) {
+                            let seg = otherBot.segments[i];
+                            let d = Math.hypot(seg.x - bHead.x, seg.y - bHead.y);
+                            if (d < minDangerDist) {
+                                minDangerDist = d;
+                                dangerAngle = Math.atan2(bHead.y - seg.y, bHead.x - seg.x);
+                            }
+                        }
+                    }
+                });
+
+                if (dangerAngle !== null && Math.random() < 0.85) {
+                    bot.targetAngle = dangerAngle;
+                    bot.isAttacking = false;
+                } else {
+                    let targetSnake = null;
+                    let minTargetDist = 260;
+
+                    let distToPlayer = Math.hypot(head.x - bHead.x, head.y - bHead.y);
+                    if (distToPlayer < minTargetDist) {
+                        minTargetDist = distToPlayer;
+                        targetSnake = snake;
+                    }
+
+                    bots.forEach(otherBot => {
+                        if (otherBot.id !== bot.id) {
+                            let obHead = otherBot.segments[0];
+                            let distToBot = Math.hypot(obHead.x - bHead.x, obHead.y - bHead.y);
+                            if (distToBot < minTargetDist) {
+                                minTargetDist = distToBot;
+                                targetSnake = otherBot;
+                            }
+                        }
+                    });
+
+                    if (targetSnake && Math.random() < 0.02 && !bot.isAttacking) {
+                        bot.isAttacking = true;
+                        bot.attackTimer = Math.floor(Math.random() * 45) + 25;
+                    }
+
+                    if (bot.isAttacking) {
+                        bot.attackTimer--;
+                        bot.currentSpeed = bot.baseSpeed * 1.7;
+                        if (targetSnake) {
+                            let targetHead = targetSnake.segments[0];
+                            bot.targetAngle = Math.atan2(targetHead.y - bHead.y, targetHead.x - bHead.x) + 0.35;
+                        }
+                        if (bot.attackTimer <= 0) bot.isAttacking = false;
+                    } else {
+                        bot.currentSpeed = bot.baseSpeed;
+
+                        let nearestFood = null;
+                        let minDist = 220;
+                        for (let i = 0; i < foods.length; i++) {
+                            let f = foods[i];
+                            let d = Math.hypot(f.x - bHead.x, f.y - bHead.y);
+                            if (d < minDist) { minDist = d; nearestFood = f; }
+                        }
+
+                        if (nearestFood) {
+                            bot.targetAngle = Math.atan2(nearestFood.y - bHead.y, nearestFood.x - bHead.x);
+                        }
+                    }
+                }
+
+                const margin = 120;
+                if (bHead.x < margin) bot.targetAngle = 0;
+                else if (bHead.x > WORLD_SIZE - margin) bot.targetAngle = Math.PI;
+                else if (bHead.y < margin) bot.targetAngle = Math.PI / 2;
+                else if (bHead.y > WORLD_SIZE - margin) bot.targetAngle = -Math.PI / 2;
+
+                let diff = bot.targetAngle - bot.angle;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                bot.angle += diff * 0.14;
+
+                let bNextX = bHead.x + Math.cos(bot.angle) * bot.currentSpeed;
+                let bNextY = bHead.y + Math.sin(bot.angle) * bot.currentSpeed;
+
+                bHead.x = Math.max(0, Math.min(WORLD_SIZE, bNextX));
+                bHead.y = Math.max(0, Math.min(WORLD_SIZE, bNextY));
+
+                let botTargetDist = bot.radius * 0.42;
+                for (let i = bot.segments.length - 1; i > 0; i--) {
+                    let curr = bot.segments[i];
+                    let next = bot.segments[i - 1];
+                    let dist = Math.hypot(next.x - curr.x, next.y - curr.y);
+                    if (dist > botTargetDist) {
+                        let ang = Math.atan2(next.y - curr.y, next.x - curr.x);
+                        curr.x = next.x - Math.cos(ang) * botTargetDist;
+                        curr.y = next.y - Math.sin(ang) * botTargetDist;
+                    }
+                }
+            });
+
+            // COLISÕES DE COMIDA
+            for (let i = foods.length - 1; i >= 0; i--) {
+                let f = foods[i];
+                let fDx = f.x - head.x;
+                let fDy = f.y - head.y;
+                let distToPlayerHead = Math.hypot(fDx, fDy);
+
+                // Efeito do Super Ímã de Comida
+                if (superMagnetActive && distToPlayerHead < 180) {
+                    f.x += (head.x - f.x) * 0.15;
+                    f.y += (head.y - f.y) * 0.15;
+                }
+
+                if (distToPlayerHead < snake.radius + f.radius) {
+                    foodsEaten++;
+                    if (f.type === 'coin') {
+                        coinsCollected += (5 * coinMultiplier);
+                        addScoreAndRewards(20);
+                    } else if (f.type === 'gem') {
+                        gemsCollected += 1;
+                        addScoreAndRewards(50);
+                    } else {
+                        addScoreAndRewards(5);
+                    }
+                    snake.segments.push({...snake.segments[snake.segments.length-1]});
+                    foods.splice(i, 1);
+                    spawnFood();
+                    continue;
+                }
+
+                for (let b = 0; b < bots.length; b++) {
+                    let bot = bots[b];
+                    let bHead = bot.segments[0];
+                    if (Math.hypot(f.x - bHead.x, f.y - bHead.y) < bot.radius + f.radius) {
+                        bot.segments.push({...bot.segments[bot.segments.length-1]});
+                        bot.score += 10;
+                        foods.splice(i, 1);
+                        spawnFood();
+                        break;
+                    }
+                }
+            }
+
+            // COLISÃO JOGADOR x BOTS
+            for(let b = 0; b < bots.length; b++) {
+                let bot = bots[b];
+                for(let i = 1; i < bot.segments.length; i++) {
+                    let seg = bot.segments[i];
+                    if(Math.hypot(head.x - seg.x, head.y - seg.y) < snake.radius + bot.radius - 2) {
+                        gameOver();
+                        return;
+                    }
+                }
+            }
+
+            // COLISÕES DE BOTS CONTRA OUTRAS COBRAS
+            for (let b = bots.length - 1; b >= 0; b--) {
+                let bot = bots[b];
+                let bHead = bot.segments[0];
+                let botDead = false;
+
+                for (let i = 1; i < snake.segments.length; i++) {
+                    let seg = snake.segments[i];
+                    if (Math.hypot(bHead.x - seg.x, bHead.y - seg.y) < bot.radius + snake.radius - 2) {
+                        killBot(b);
+                        addScoreAndRewards(150);
+                        botDead = true;
+                        break;
+                    }
+                }
+
+                if (botDead) continue;
+
+                for (let ob = 0; ob < bots.length; ob++) {
+                    if (ob === b) continue;
+                    let otherBot = bots[ob];
+
+                    for (let i = 1; i < otherBot.segments.length; i++) {
+                        let seg = otherBot.segments[i];
+                        if (Math.hypot(bHead.x - seg.x, bHead.y - seg.y) < bot.radius + otherBot.radius - 2) {
+                            killBot(b);
+                            botDead = true;
+                            break;
+                        }
+                    }
+                    if (botDead) break;
+                }
+            }
+        }
+
+        // RENDERIZAÇÃO
+        function drawGame() {
+            ctx.fillStyle = currentWorldTheme.bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let head = snake.segments[0];
+            let camX = canvas.width / 2 - head.x;
+            let camY = canvas.height / 2 - head.y;
+
+            ctx.save();
+            ctx.translate(camX, camY);
+
+            // Grade do Mapa
+            ctx.strokeStyle = currentWorldTheme.grid;
+            ctx.lineWidth = 1;
+            let gridSize = 100;
+            ctx.beginPath();
+            for (let x = 0; x <= WORLD_SIZE; x += gridSize) {
+                ctx.moveTo(x, 0); ctx.lineTo(x, WORLD_SIZE);
+            }
+            for (let y = 0; y <= WORLD_SIZE; y += gridSize) {
+                ctx.moveTo(0, y); ctx.lineTo(WORLD_SIZE, y);
+            }
+            ctx.stroke();
+
+            // Borda do Mundo
+            ctx.strokeStyle = currentWorldTheme.border;
+            ctx.lineWidth = 6;
+            ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
+
+            const now = Date.now() * 0.003;
+
+            // ALIMENTOS
+            for (let i = 0; i < foods.length; i++) {
+                let f = foods[i];
+                if (f.x + camX < -30 || f.x + camX > canvas.width + 30 || f.y + camY < -30 || f.y + camY > canvas.height + 30) continue;
+
+                ctx.save();
+                if (f.type === 'coin') {
+                    let scaleX = Math.abs(Math.sin(now + f.pulseOffset));
+                    ctx.translate(f.x, f.y);
+                    ctx.scale(scaleX, 1);
+
+                    ctx.fillStyle = '#ffd700';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#b88600';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (f.type === 'gem') {
+                    let pulse = Math.sin(now * 2 + f.pulseOffset) * 1.5;
+                    ctx.translate(f.x, f.y);
+                    ctx.fillStyle = '#00d2d3';
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, -9 - pulse);
+                    ctx.lineTo(8 + pulse, 0);
+                    ctx.lineTo(0, 9 + pulse);
+                    ctx.lineTo(-8 - pulse, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = f.color;
+                    ctx.beginPath();
+                    ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            // DESENHAR BOTS
+            for (let b = 0; b < bots.length; b++) {
+                let bot = bots[b];
+                for (let i = bot.segments.length - 1; i >= 0; i--) {
+                    let seg = bot.segments[i];
+                    drawSnakeSegment(seg.x, seg.y, bot.radius, bot.color, bot.texture, i);
+                }
+                let bHead = bot.segments[0];
+                drawSnakeName(bHead.x, bHead.y, bot.radius, bot.name, false);
+            }
+
+            // DESENHAR COBRA DO JOGADOR
+            for (let i = snake.segments.length - 1; i >= 0; i--) {
+                let seg = snake.segments[i];
+                drawSnakeSegment(seg.x, seg.y, snake.radius, snake.color, snake.texture, i);
+
+                if (i === 0) {
+                    let angle = moveAngle;
+                    
+                    let eyeDist = snake.radius * 0.55;
+                    let eyeX1 = head.x + Math.cos(angle + 0.5) * eyeDist;
+                    let eyeY1 = head.y + Math.sin(angle + 0.5) * eyeDist;
+                    let eyeX2 = head.x + Math.cos(angle - 0.5) * eyeDist;
+                    let eyeY2 = head.y + Math.sin(angle - 0.5) * eyeDist;
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath(); ctx.arc(eyeX1, eyeY1, 4.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(eyeX2, eyeY2, 4.5, 0, Math.PI * 2); ctx.fill();
+
+                    ctx.fillStyle = '#000000';
+                    ctx.beginPath(); ctx.arc(eyeX1 + Math.cos(angle)*1.5, eyeY1 + Math.sin(angle)*1.5, 2.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(eyeX2 + Math.cos(angle)*1.5, eyeY2 + Math.sin(angle)*1.5, 2.5, 0, Math.PI * 2); ctx.fill();
+
+                    // ACESSÓRIOS
+                    ctx.save();
+                    ctx.translate(head.x, head.y);
+                    ctx.rotate(angle);
+
+                    if (currentAccessory === 'acc_tophat') {
+                        ctx.fillStyle = '#111';
+                        ctx.fillRect(-10, -18, 20, 4);
+                        ctx.fillRect(-6, -32, 12, 14);
+                        ctx.fillStyle = '#ff3366';
+                        ctx.fillRect(-6, -21, 12, 3);
+                    } else if (currentAccessory === 'acc_wizhat') {
+                        ctx.fillStyle = '#5f27cd';
+                        ctx.beginPath();
+                        ctx.moveTo(-12, -16);
+                        ctx.lineTo(12, -16);
+                        ctx.lineTo(0, -38);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else if (currentAccessory === 'acc_crown') {
+                        ctx.fillStyle = '#ffd700';
+                        ctx.beginPath();
+                        ctx.moveTo(-8, -14);
+                        ctx.lineTo(-12, -26);
+                        ctx.lineTo(-4, -19);
+                        ctx.lineTo(0, -28);
+                        ctx.lineTo(4, -19);
+                        ctx.lineTo(12, -26);
+                        ctx.lineTo(8, -14);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else if (currentAccessory === 'acc_cap') {
+                        ctx.fillStyle = '#ff5252';
+                        ctx.beginPath();
+                        ctx.arc(0, -10, 10, Math.PI, 0);
+                        ctx.fill();
+                        ctx.fillRect(0, -12, 14, 3);
+                    } else if (currentAccessory === 'acc_shades') {
+                        ctx.fillStyle = '#00f5d4';
+                        ctx.fillRect(2, -7, 5, 14);
+                    } else if (currentAccessory === 'acc_halo') {
+                        ctx.strokeStyle = '#ffeaa7';
+                        ctx.lineWidth = 2.5;
+                        ctx.beginPath();
+                        ctx.ellipse(0, -22, 11, 4, 0, 0, Math.PI * 2);
+                        ctx.stroke();
+                    } else if (currentAccessory === 'acc_headset') {
+                        ctx.fillStyle = '#ff0055';
+                        ctx.fillRect(-14, -12, 5, 12);
+                        ctx.fillRect(9, -12, 5, 12);
+                        ctx.strokeStyle = '#00ff88';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(0, -6, 12, Math.PI, 0);
+                        ctx.stroke();
+                    } else if (currentAccessory === 'acc_mask') {
+                        ctx.fillStyle = '#a55eea';
+                        ctx.fillRect(-8, -4, 16, 8);
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(-5, -2, 3, 3);
+                        ctx.fillRect(2, -2, 3, 3);
+                    } else if (currentAccessory === 'acc_swords') {
+                        ctx.strokeStyle = '#cccccc';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(-12, -24); ctx.lineTo(12, -4);
+                        ctx.moveTo(12, -24); ctx.lineTo(-12, -4);
+                        ctx.stroke();
+                    }
+
+                    ctx.restore();
+
+                    drawSnakeName(head.x, head.y, snake.radius, snake.name, true);
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function drawSnakeName(x, y, radius, name, isPlayer) {
+            ctx.save();
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+
+            let offsetY = y - radius - 16;
+
+            ctx.fillStyle = isPlayer ? '#00ff88' : '#ffffff';
+            ctx.fillText(name, x, offsetY);
+            ctx.restore();
+        }
+
+        function drawSnakeSegment(x, y, radius, color, texture, index) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (texture === 'scales') {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(0, 0, radius * 0.65, 0, Math.PI);
+                ctx.stroke();
+            } else if (texture === 'striped') {
+                if (index % 2 === 0) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, radius * 0.7, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (texture === 'dragon') {
+                ctx.fillStyle = '#111111';
+                ctx.beginPath();
+                ctx.rect(-radius*0.3, -radius*0.8, radius*0.6, radius*0.4);
+                ctx.fill();
+            } else if (texture === 'crystal') {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(-radius*0.5, -radius*0.5);
+                ctx.lineTo(radius*0.5, radius*0.5);
+                ctx.stroke();
+            } else if (texture === 'gold') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+                ctx.beginPath();
+                ctx.arc(-radius*0.3, -radius*0.3, radius*0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        // TELA DE GAME OVER PERSONALIZADA
+        function gameOver() {
+            gameActive = false;
+            window.removeEventListener('resize', resizeCanvas);
+            
+            let finalScore = Math.floor(score);
+            saveProgress(finalScore, coinsCollected, gemsCollected);
+
+            // Preenche os dados no modal personalizado
+            document.getElementById('go-score').innerText = finalScore.toLocaleString();
+            document.getElementById('go-foods').innerText = foodsEaten.toLocaleString();
+            document.getElementById('go-coins').innerText = '+' + coinsCollected.toLocaleString();
+            document.getElementById('go-gems').innerText = '+' + gemsCollected.toLocaleString();
+
+            // Exibe a tela personalizada sobre o canvas
+            document.getElementById('gameover-screen').classList.add('active');
+        }
+    </script>
+</body>
+</html>
